@@ -1,19 +1,13 @@
 import io
-import time
 import json
 import requests
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
+from datetime import datetime
 import warnings
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 # تجاهل تحذيرات الشهادات
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
-
-# إعداد التوقيت المحلي
-is_dst = time.localtime().tm_isdst > 0
-utc_offset = - (time.altzone if is_dst else time.timezone)
-offset = timedelta(seconds=utc_offset)
 
 # تحميل ملف XML من المصدر
 url = 'https://www.open-epg.com/generate/xtckHrCmAy.xml'
@@ -25,23 +19,18 @@ if response.status_code != 200:
 # تحليل XML
 root = ET.fromstring(response.content.decode('utf-8'))
 
-# تعديل صيغة الوقت لتتضمن +03:00 بدلاً من +0300
-def parse_and_adjust_time(t_str):
+# نعيد التاريخ بصيغة UTC القياسية: 2025-05-02T17:30:00Z
+def parse_time_utc(t_str):
     t_utc = datetime.strptime(t_str[:14], '%Y%m%d%H%M%S')
-    t_local = t_utc + offset
-    # تنسيق المنطقة الزمنية بصيغة +HH:MM
-    hours_offset = int(utc_offset / 3600)
-    minutes_offset = int(abs(utc_offset % 3600) / 60)
-    tz_formatted = f"{hours_offset:+03d}:{minutes_offset:02d}"
-    return t_local.strftime('%Y-%m-%dT%H:%M:%S') + tz_formatted
+    return t_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 epg_data = []
 
 for programme in root.findall('programme'):
     epg_data.append({
         'channel': programme.attrib.get('channel'),
-        'start': parse_and_adjust_time(programme.attrib['start']),
-        'stop': parse_and_adjust_time(programme.attrib['stop']),
+        'start': parse_time_utc(programme.attrib['start']),
+        'stop': parse_time_utc(programme.attrib['stop']),
         'title': programme.findtext('title', default='').strip(),
         'description': programme.findtext('desc', default='').strip()
     })
