@@ -14,7 +14,6 @@ warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 is_dst = time.localtime().tm_isdst > 0
 utc_offset = - (time.altzone if is_dst else time.timezone)
 offset = timedelta(seconds=utc_offset)
-time_zone_str = time.strftime('%z')
 
 # تحميل ملف XML من المصدر
 url = 'https://www.open-epg.com/generate/xtckHrCmAy.xml'
@@ -26,10 +25,15 @@ if response.status_code != 200:
 # تحليل XML
 root = ET.fromstring(response.content.decode('utf-8'))
 
+# تعديل صيغة الوقت لتتضمن +03:00 بدلاً من +0300
 def parse_and_adjust_time(t_str):
     t_utc = datetime.strptime(t_str[:14], '%Y%m%d%H%M%S')
     t_local = t_utc + offset
-    return t_local.strftime('%Y-%m-%dT%H:%M:%S') + time_zone_str
+    # تنسيق المنطقة الزمنية بصيغة +HH:MM
+    hours_offset = int(utc_offset / 3600)
+    minutes_offset = int(abs(utc_offset % 3600) / 60)
+    tz_formatted = f"{hours_offset:+03d}:{minutes_offset:02d}"
+    return t_local.strftime('%Y-%m-%dT%H:%M:%S') + tz_formatted
 
 epg_data = []
 
