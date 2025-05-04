@@ -22,15 +22,16 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests lxml
 
       - name: Run EPG script
         run: python epg_script.py
+        continue-on-error: false
 
       - name: Commit and Push updated JSON
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "action@github.com"
           git add epg-pro.json
-          git commit -m "Auto-update EPG-PRO JSON: $(date)" || echo "No changes"
+          git commit -m "Auto-update EPG-PRO JSON: $(date -u)" || echo "No changes to commit"
           git push origin main
