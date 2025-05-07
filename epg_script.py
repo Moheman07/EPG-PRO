@@ -58,7 +58,7 @@ for programme in root.findall('programme'):
 
 # التحقق من وجود بيانات
 if not epg_data:
-    print("No valid programs found for today or future")
+    print("No valid programs found for today")
     raise ValueError("No valid EPG data generated")
 
 # حفظ كـ JSON
