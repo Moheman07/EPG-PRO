@@ -28,6 +28,16 @@ jobs:
         run: python epg_script.py
         continue-on-error: false
 
+      - name: Verify JSON update
+        run: |
+          if [ -f epg-pro.json ]; then
+            echo "JSON file exists"
+            cat epg-pro.json | head -n 20
+          else
+            echo "JSON file not found"
+            exit 1
+          fi
+
       - name: Commit and Push updated JSON
         run: |
           git config --global user.name "GitHub Actions"
@@ -35,3 +45,15 @@ jobs:
           git add epg-pro.json
           git commit -m "Auto-update EPG-PRO JSON: $(date -u)" || echo "No changes to commit"
           git push origin main
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 1,  # استبدل برقم مشكلة موجودة
+              body: 'Failed to generate EPG-PRO JSON. Check workflow logs for details.'
+            })
