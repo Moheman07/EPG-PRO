@@ -56,5 +56,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number,
-              body: '❌ **EPG JSON generation failed**.\nPlease check the [workflow logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions) for details.'
+              body: `❌ **EPG JSON generation failed.**
+              
+Please check the [workflow logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions) for details.`
             });
