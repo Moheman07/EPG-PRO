@@ -2,7 +2,7 @@ name: Generate EPG-PRO JSON
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # مرة واحدة يومياً الساعة 3 صباحًا بتوقيت UTC
+    - cron: '0 3,15 * * *'  # كل يوم الساعة 3 صباحًا و3 مساءً بتوقيت UTC
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests lxml
 
       - name: Run EPG script
         run: python epg_script.py
@@ -31,10 +31,10 @@ jobs:
       - name: Verify JSON update
         run: |
           if [ -f epg-pro.json ]; then
-            echo "✅ JSON file exists"
-            head -n 20 epg-pro.json
+            echo "JSON file exists"
+            cat epg-pro.json | head -n 20
           else
-            echo "❌ JSON file not found"
+            echo "JSON file not found"
             exit 1
           fi
 
@@ -43,7 +43,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "action@github.com"
           git add epg-pro.json
-          git diff --quiet && echo "No changes to commit" || git commit -m "Auto-update EPG-PRO JSON: $(date -u)"
+          git commit -m "Auto-update EPG-PRO JSON: $(date -u)" || echo "No changes to commit"
           git push origin main
 
       - name: Notify on failure
@@ -51,12 +51,9 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const issue_number = 1;  // تأكد أن هناك Issue مفتوحة بهذا الرقم
-            await github.rest.issues.createComment({
+            github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number,
-              body: `❌ **EPG JSON generation failed.**
-              
-Please check the [workflow logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions) for details.`
-            });
+              issue_number: 1,  # استبدل برقم مشكلة موجودة
+              body: 'Failed to generate EPG-PRO JSON. Check workflow logs for details.'
+            })
